@@ -1,0 +1,104 @@
+---
+/**
+ * OPINIONES · Alcance + foto de autoridad (izquierda) y testimonios escalonados (derecha).
+ * Testimonios → src/content/testimonios.json (solo audiencia "pacientes").
+ * Profesionales → src/content/profesionales.json
+ * Alcance → copy.opiniones.alcance (home.ts)   ·   Foto → slot "opiniones-profesional"
+ * IMPORTANTE: reemplazar testimonios de ejemplo por opiniones reales verificadas.
+ */
+import { getCollection, getEntry } from 'astro:content';
+import type { SeccionMeta, HomeCopy } from '../../data/home';
+import Section from '../ui/Section.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
+import Icon from '../ui/Icon.astro';
+import Media from '../ui/Media.astro';
+
+interface Props { meta: SeccionMeta; copy: HomeCopy['opiniones'] }
+const { meta, copy } = Astro.props;
+
+const testimonios = await Promise.all(
+  (await getCollection('testimonios', ({ data }) => data.audiencia === 'pacientes')).map(async (t) => ({
+    ...t,
+    servicio: t.data.servicio ? await getEntry(t.data.servicio) : undefined,
+  }))
+);
+const profesionales = await getCollection('profesionales');
+const mes = new Intl.DateTimeFormat('es-CL', { month: 'long', year: 'numeric' });
+---
+
+<Section meta={meta}>
+  <div class="wrap">
+    <SectionHeader id={meta.id} titulo={copy.titulo} bajada={copy.bajada} />
+
+    <div class="sp">
+      <aside class="reach reveal" aria-label="Alcance de Medismart">
+        <p class="reach__n">{copy.alcance.valor}</p>
+        <p class="reach__t">{copy.alcance.detalle}</p>
+        <p class="reach__c">{copy.alcance.paises.join(', ')}.</p>
+        <Media slot="opiniones-profesional" ratio="5 / 4" class="reach__media" />
+      </aside>
+
+      <ul class="quotes">
+        {testimonios.map(({ data, servicio }, i) => (
+          <li class="reveal" style={`--d:${i * 90}ms`}>
+            <figure class="q">
+              <Icon name="quotes" size={28} class="q__mark" />
+              <blockquote>{data.texto}</blockquote>
+              <figcaption>
+                <span class="q__av">{data.autor.slice(0, 1)}</span>
+                <span class="q__who"><strong>{data.autor}, {data.ciudad}</strong><small>{servicio?.data.nombre}, {mes.format(data.fecha)}</small></span>
+                {data.verificado && <span class="q__ok"><Icon name="seal" size={16} />Verificado</span>}
+              </figcaption>
+            </figure>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <div class="pros reveal">
+      <p class="pros__t">Profesionales inscritos en la Superintendencia de Salud, en más de 25 especialidades.</p>
+      <ul>
+        {profesionales.map(({ data }) => (
+          <li><span class="av">{data.iniciales}</span><span><strong>{data.nombre}</strong><small>{data.especialidad}, {data.anios} años</small></span></li>
+        ))}
+      </ul>
+      <a class="link" href="https://rnpi.superdesalud.gob.cl/" target="_blank" rel="noopener">Verificar en el RNPI<Icon name="arrow-up-right" /></a>
+    </div>
+  </div>
+</Section>
+
+<style>
+  .sp { display: grid; gap: 40px; }
+  @media (min-width: 1000px) { .sp { grid-template-columns: 5fr 7fr; gap: 64px; align-items: start; } }
+
+  .reach { display: grid; gap: 8px; }
+  .reach__n { font-family: var(--f-display); font-weight: 300; font-size: clamp(5rem, 11vw, 9rem); line-height: 0.85; letter-spacing: -0.07em; color: var(--accent-ink); }
+  .reach__t { font-family: var(--f-display); font-weight: 500; font-size: 1.4rem; letter-spacing: -0.03em; }
+  .reach__c { color: var(--text-2); max-width: 36ch; margin-bottom: 20px; }
+
+  .quotes { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  @media (min-width: 720px) {
+    .quotes { grid-template-columns: 1fr 1fr; }
+    .quotes li:nth-child(2) { transform: translateY(56px); }
+    .quotes li:nth-child(3) { grid-column: 1 / -1; width: 78%; justify-self: end; margin-top: 56px; }
+  }
+  .q { margin: 0; height: 100%; display: flex; flex-direction: column; gap: 20px; padding: 28px; border-radius: var(--r-card); background: var(--surface); border: 1px solid var(--line); }
+  .q :global(.q__mark) { color: var(--accent); }
+  blockquote { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 1.12rem; line-height: 1.45; letter-spacing: -0.015em; }
+  figcaption { margin-top: auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .q__av { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-ink); font-weight: 700; }
+  .q__who { display: grid; line-height: 1.3; }
+  .q__who strong { font-size: 0.92rem; }
+  .q__who small { font-size: 0.8rem; color: var(--text-2); }
+  .q__ok { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; font-size: 0.78rem; font-weight: 700; color: var(--ok); }
+
+  .pros { margin-top: clamp(72px, 9vw, 120px); padding-top: 32px; border-top: 1px solid var(--line-2); display: grid; gap: 24px; align-items: center; }
+  @media (min-width: 1000px) { .pros { grid-template-columns: 1fr auto auto; gap: 40px; } }
+  .pros__t { font-family: var(--f-display); font-weight: 500; font-size: 1.15rem; letter-spacing: -0.02em; max-width: 34ch; }
+  .pros ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 20px; }
+  .pros li { display: flex; align-items: center; gap: 10px; }
+  .pros li > span:last-child { display: grid; line-height: 1.25; }
+  .pros strong { font-size: 0.9rem; }
+  .pros small { font-size: 0.8rem; color: var(--text-2); }
+  .av { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--text); color: var(--bg); font-weight: 700; font-size: 0.8rem; }
+</style>

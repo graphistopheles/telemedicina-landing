@@ -1,0 +1,74 @@
+---
+/**
+ * HOME: la página se compone a partir de `secciones` (data/home.ts).
+ * Reordenar u ocultar una sección es un cambio de contenido, no de código.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Header from '../components/sections/Header.astro';
+import Footer from '../components/sections/Footer.astro';
+import Hero from '../components/sections/Hero.astro';
+import TrustBar from '../components/sections/TrustBar.astro';
+import HowItWorks from '../components/sections/HowItWorks.astro';
+import Services from '../components/sections/Services.astro';
+import Ecosystem from '../components/sections/Ecosystem.astro';
+import Packs from '../components/sections/Packs.astro';
+import Pricing from '../components/sections/Pricing.astro';
+import SocialProof from '../components/sections/SocialProof.astro';
+import Referral from '../components/sections/Referral.astro';
+import Compliance from '../components/sections/Compliance.astro';
+import Business from '../components/sections/Business.astro';
+import Resources from '../components/sections/Resources.astro';
+import Faq from '../components/sections/Faq.astro';
+import FinalCta from '../components/sections/FinalCta.astro';
+import { secciones, copy, seo } from '../data/home';
+import { site } from '../data/site';
+
+const registro: Record<string, any> = {
+  Hero, TrustBar, HowItWorks, Services, Packs, Pricing, SocialProof,
+  Ecosystem, Referral, Compliance, Business, Resources, Faq, FinalCta,
+};
+
+// Índice §NN solo para secciones con encabezado numerado (excluye hero y franja de sellos).
+let n = 0;
+const visibles = secciones
+  .filter((s) => s.visible !== false)
+  .map((s) => ({ ...s, indice: ['Hero', 'TrustBar'].includes(s.componente) ? '' : String(++n).padStart(2, '0') }));
+
+// Datos estructurados: organización médica + FAQ (rich results en Google).
+const faqs = await getCollection('faqs');
+const servicios = await getCollection('servicios');
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'MedicalOrganization',
+    name: site.marcaCompleta,
+    url: site.url,
+    telephone: site.telefono,
+    email: site.email,
+    areaServed: ['CL', 'BO', 'CO', 'PE', 'EC', 'BR', 'MX', 'CR'],
+    slogan: site.lema,
+    medicalSpecialty: servicios.map((s) => s.data.nombre),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.data.pregunta,
+      acceptedAnswer: { '@type': 'Answer', text: f.data.respuesta },
+    })),
+  },
+];
+---
+
+<Base titulo={seo.titulo} descripcion={seo.descripcion} jsonLd={jsonLd}>
+  <Header />
+  <main id="contenido">
+    {visibles.map((s) => {
+      const Componente = registro[s.componente];
+      return <Componente meta={s} copy={(copy as Record<string, unknown>)[s.id]} indice={s.indice} />;
+    })}
+  </main>
+  <Footer />
+</Base>

@@ -1,0 +1,137 @@
+---
+/**
+ * HEADER
+ * - Franja superior: mensajes de confianza + contacto (textos en src/data/site.ts).
+ * - Barra principal (estilo OhMD): logo · navegación en píldora · selector de
+ *   audiencia · CTA. Los enlaces se editan en `navPrincipal` (site.ts).
+ * - Barra fija móvil: acción principal B2C siempre visible.
+ */
+import { site, navPrincipal, rutasAudiencia } from '../../data/site';
+import Icon from '../ui/Icon.astro';
+import Logo from '../ui/Logo.astro';
+---
+
+<!-- Franja utilitaria -->
+<div class="util">
+  <div class="wrap util__in">
+    <span class="util__item"><Icon name="shield" size={15} /> Telemedicina bajo Ley 21.541</span>
+    <span class="util__item util__hide"><Icon name="users" size={15} /> {site.presencia}</span>
+    <a class="util__item util__right" href={site.whatsapp} target="_blank" rel="noopener"><Icon name="whatsapp" size={15} /> {site.telefono}</a>
+  </div>
+</div>
+
+<!-- Centinela: cuando sale de pantalla, el header gana fondo sólido -->
+<div id="hdr-sentinel" aria-hidden="true"></div>
+
+<header class="hdr" id="hdr">
+  <div class="wrap hdr__in">
+    <a class="logo" href="/#inicio" aria-label={`${site.marcaCompleta}, ir al inicio`}>
+      <Logo uid="logo-hdr" class="logo__svg" />
+    </a>
+
+    <nav class="nav" aria-label="Principal">
+      <ul>
+        {navPrincipal.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <div class="hdr__end">
+      <nav class="aud" aria-label="Elige tu perfil">
+        {rutasAudiencia.map((r, i) => (
+          <a href={r.href} class:list={['aud__opt', { 'is-on': i === 0 }]} data-aud={r.id} data-cta={`switch-${r.id}`}>{r.label}</a>
+        ))}
+      </nav>
+      <a class="btn btn--primary btn--sm hdr__cta" href={site.appUrl} data-cta="header-consultar">{site.ctaPaciente}</a>
+
+      <details class="mnav">
+        <summary aria-label="Abrir menú"><span></span><span></span></summary>
+        <div class="mnav__panel">
+          <ul>
+            {navPrincipal.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+            <li><a href="/#empresas">Para empresas</a></li>
+          </ul>
+          <a class="btn btn--primary btn--block" href={site.appUrl} data-cta="menu-consultar">{site.ctaPaciente}</a>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<!-- Barra fija móvil (< 760px) -->
+<div class="mbar" id="mbar">
+  <div>
+    <strong>{site.barraMovil.titulo}</strong>
+    <span>{site.barraMovil.apoyo}</span>
+  </div>
+  <a class="btn btn--primary btn--sm" href={site.appUrl} data-cta="mbar-consultar">{site.barraMovil.cta}</a>
+</div>
+
+<script>
+  // Selector de audiencia: se marca "Empresas" mientras esa zona está en pantalla.
+  const opts = document.querySelectorAll<HTMLAnchorElement>('.aud__opt');
+  const b2b = document.getElementById('empresas');
+  if (b2b) {
+    new IntersectionObserver(
+      ([e]) => opts.forEach((o) => o.classList.toggle('is-on', (o.dataset.aud === 'empresas') === e.isIntersecting)),
+      { rootMargin: '-45% 0px -45% 0px' }
+    ).observe(b2b);
+  }
+  // Header sólido al hacer scroll (sin listener de scroll: usa un centinela).
+  const hdr = document.getElementById('hdr');
+  const sentinel = document.getElementById('hdr-sentinel');
+  if (hdr && sentinel) new IntersectionObserver(([e]) => hdr.classList.toggle('is-scrolled', !e.isIntersecting)).observe(sentinel);
+  // Cierra el menú móvil al elegir un enlace.
+  document.querySelectorAll('.mnav a').forEach((a) => a.addEventListener('click', () => document.querySelector('.mnav')?.removeAttribute('open')));
+</script>
+
+<style>
+  .util { background: var(--bg); border-bottom: 1px solid var(--line); color: var(--text-2); font-size: 0.8rem; }
+  .util__in { display: flex; gap: 28px; align-items: center; min-height: 38px; }
+  .util__item { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; white-space: nowrap; }
+  .util__item :global(svg) { color: var(--accent-ink); }
+  .util__right { margin-left: auto; font-weight: 600; color: var(--text); }
+  @media (max-width: 720px) { .util__hide { display: none; } }
+  @media (max-width: 440px) { .util__item:first-child { display: none; } }
+
+  #hdr-sentinel { height: 1px; }
+  .hdr { position: sticky; top: 0; z-index: 50; transition: background-color 0.4s, box-shadow 0.4s; }
+  .hdr.is-scrolled { background: color-mix(in oklab, var(--bg) 82%, transparent); backdrop-filter: blur(16px) saturate(1.4); -webkit-backdrop-filter: blur(16px) saturate(1.4); box-shadow: 0 1px 0 var(--line); }
+  .hdr__in { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 20px; min-height: 72px; }
+
+  /* Logo oficial (src/components/ui/Logo.astro). Alto controlado aquí. */
+  .logo { display: inline-flex; align-items: center; color: var(--navy); }
+  .logo :global(.logo__svg) { height: 34px; width: auto; }
+  @media (prefers-color-scheme: dark) { .logo { color: var(--text); } }
+
+  /* Navegación en píldora centrada */
+  .nav { display: none; justify-self: center; }
+  .nav ul { display: flex; gap: 2px; list-style: none; margin: 0; padding: 4px; border-radius: var(--r-pill); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .nav a { display: block; padding: 8px 14px; border-radius: var(--r-pill); text-decoration: none; font-size: 0.9rem; font-weight: 600; color: var(--text-2); transition: color 0.2s, background-color 0.2s; }
+  .nav a:hover { color: var(--text); background: var(--bg-2); }
+
+  .hdr__end { display: flex; align-items: center; gap: 10px; justify-self: end; }
+  .aud { display: none; padding: 3px; border-radius: var(--r-pill); border: 1px solid var(--line-2); }
+  .aud__opt { padding: 6px 12px; border-radius: var(--r-pill); font-size: 0.82rem; font-weight: 700; text-decoration: none; color: var(--text-2); transition: background-color 0.3s, color 0.3s; }
+  .aud__opt.is-on { background: var(--text); color: var(--bg); }
+  .hdr__cta { display: none; }
+
+  .mnav { position: relative; }
+  .mnav summary { list-style: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line-2); display: grid; place-content: center; gap: 6px; cursor: pointer; }
+  .mnav summary::-webkit-details-marker { display: none; }
+  .mnav summary span { display: block; width: 16px; height: 1.5px; background: var(--text); transition: transform 0.35s var(--ease); }
+  .mnav[open] summary span:first-child { transform: translateY(3.75px) rotate(45deg); }
+  .mnav[open] summary span:last-child { transform: translateY(-3.75px) rotate(-45deg); }
+  .mnav__panel { position: absolute; right: 0; top: 56px; width: min(320px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: var(--shadow-lg); padding: 10px; }
+  .mnav__panel ul { list-style: none; padding: 0; margin: 0 0 10px; }
+  .mnav__panel a:not(.btn) { display: block; padding: 12px 14px; text-decoration: none; font-weight: 600; border-radius: var(--r-field); }
+  .mnav__panel a:not(.btn):hover { background: var(--bg-2); }
+
+  @media (min-width: 760px) { .aud { display: inline-flex; } .hdr__cta { display: inline-flex; } }
+  @media (min-width: 1200px) { .nav { display: block; } .mnav { display: none; } }
+
+  .mbar { position: fixed; z-index: 60; left: 12px; right: 12px; bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 8px 8px 20px; background: var(--text); color: var(--bg); border-radius: var(--r-pill); box-shadow: var(--shadow-lg); }
+  .mbar div { display: grid; line-height: 1.2; }
+  .mbar strong { font-family: var(--f-display); font-weight: 500; font-size: 0.95rem; }
+  .mbar span { font-size: 0.78rem; opacity: 0.7; }
+  @media (min-width: 760px) { .mbar { display: none; } }
+</style>

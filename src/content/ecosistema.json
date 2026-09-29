@@ -1,0 +1,8 @@
+[
+  { "id": "aida", "nombre": "AIda", "tipo": "Asistente virtual con IA", "beneficio": "Resuelve tus dudas, te orienta y agenda por ti, a cualquier hora.", "icono": "sparkle", "orden": 1 },
+  { "id": "triage", "nombre": "Triage", "tipo": "Signos vitales con IA", "beneficio": "Mide indicadores de salud con la cámara de tu celular antes de la consulta.", "icono": "pulse", "orden": 2 },
+  { "id": "farmazon", "nombre": "Farmazon", "tipo": "Farmacia digital", "beneficio": "Compra tus medicamentos con la receta de tu consulta y recíbelos en casa.", "icono": "pill", "orden": 3 },
+  { "id": "wikidoc", "nombre": "Wikidoc", "tipo": "Biblioteca de salud", "beneficio": "Información médica confiable y en lenguaje simple para decidir mejor.", "icono": "books", "orden": 4 },
+  { "id": "cronicos", "nombre": "Bienestar continuo", "tipo": "Enfermedades crónicas", "beneficio": "Seguimiento permanente para hipertensión, diabetes y otras condiciones.", "icono": "chart", "orden": 5 },
+  { "id": "mente", "nombre": "Salud mental", "tipo": "Programa integral", "beneficio": "Acompañamiento psicológico continuo, no solo sesiones aisladas.", "icono": "mind", "orden": 6 }
+]

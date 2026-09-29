@@ -1,0 +1,75 @@
+---
+/**
+ * REFERIDOS · Banner violeta con cupón.
+ * Textos y código → copy.referidos (home.ts). Pasos → constante `pasos` abajo.
+ * Mensaje de WhatsApp → atributo href del botón "WhatsApp".
+ */
+import type { SeccionMeta, HomeCopy } from '../../data/home';
+import Section from '../ui/Section.astro';
+import Icon from '../ui/Icon.astro';
+
+interface Props { meta: SeccionMeta; copy: HomeCopy['referidos'] }
+const { meta, copy } = Astro.props;
+const pasos = ['Comparte tu código', 'Tu amigo ahorra $5.000', 'Tú ganas $5.000'];
+---
+
+<Section meta={meta} class="ref">
+  <div class="wrap">
+    <div class="ref__box reveal">
+      <div class="ref__copy">
+        <h2 id={`${meta.id}-titulo`} class="h2">{copy.titulo}</h2>
+        <p class="ref__lead">{copy.bajada}</p>
+        <ol class="ref__steps">
+          {pasos.map((p, i) => <li><span>{i + 1}</span>{p}</li>)}
+        </ol>
+      </div>
+
+      <div class="ticket" aria-label="Tu código de referido">
+        <div class="ticket__top"><Icon name="gift" size={26} /><span>Código de ejemplo</span></div>
+        <p class="ticket__code" id="refCode">{copy.codigo}</p>
+        <div class="ticket__actions">
+          <button class="btn btn--ink btn--sm" type="button" id="copyRef" data-cta="referido-copiar"><Icon name="copy" size={16} /> <span data-l>Copiar</span></button>
+          <a class="btn btn--ghost btn--sm" href={`https://wa.me/?text=${encodeURIComponent(`Te regalo $5.000 para tu primera consulta en Medismart con el código ${copy.codigo}`)}`} target="_blank" rel="noopener" data-cta="referido-whatsapp"><Icon name="whatsapp" size={16} /> WhatsApp</a>
+        </div>
+        <p class="ticket__foot">Obtén tu código personal al crear tu cuenta.</p>
+      </div>
+    </div>
+  </div>
+</Section>
+
+<script>
+  const btn = document.getElementById('copyRef');
+  btn?.addEventListener('click', async () => {
+    const code = document.getElementById('refCode')?.textContent ?? '';
+    const label = btn.querySelector('[data-l]')!;
+    try { await navigator.clipboard.writeText(code); label.textContent = '¡Copiado!'; }
+    catch { label.textContent = 'Copia manualmente'; }
+    setTimeout(() => (label.textContent = 'Copiar'), 2200);
+  });
+</script>
+
+<style>
+  :global(section.section.ref) { padding-block: 0 var(--section-y); }
+  .ref__box { position: relative; overflow: hidden; display: grid; gap: 40px; padding: clamp(32px, 6vw, 72px); border-radius: 32px; background: var(--accent); color: var(--on-accent); }
+  .ref__box::after { content: ''; position: absolute; width: 640px; height: 640px; right: -200px; bottom: -380px; border-radius: 50%; background: radial-gradient(circle, color-mix(in oklab, var(--blue) 55%, transparent), transparent 65%); opacity: 0.55; pointer-events: none; }
+  @media (min-width: 960px) { .ref__box { grid-template-columns: 1.3fr 0.9fr; align-items: center; gap: 64px; } }
+  .ref__copy { position: relative; z-index: 1; display: grid; gap: 22px; }
+  .ref__copy .h2 { max-width: 16ch; }
+  .ref__copy :global(.tone) { color: rgba(251, 252, 255, 0.62); }
+  .ref__lead { color: rgba(251, 252, 255, 0.82); max-width: 50ch; font-size: 1.08rem; }
+  .ref__steps { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .ref__steps li { display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px 8px 8px; border-radius: var(--r-pill); background: rgba(251, 252, 255, 0.12); border: 1px solid rgba(251, 252, 255, 0.18); font-size: 0.9rem; font-weight: 600; }
+  .ref__steps span { width: 26px; height: 26px; border-radius: 50%; background: var(--on-accent); color: var(--accent); display: grid; place-items: center; font-size: 0.78rem; font-weight: 700; }
+
+  .ticket { position: relative; z-index: 1; display: grid; gap: 16px; padding: 28px; border-radius: 24px; background: var(--surface); color: var(--text); box-shadow: 0 40px 80px -40px rgba(3, 12, 67, 0.55); transform: rotate(2deg); transition: transform 0.7s var(--ease); }
+  .ticket:hover { transform: rotate(0deg) translateY(-4px); }
+  .ticket::before, .ticket::after { content: ''; position: absolute; top: 50%; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); translate: 0 -50%; }
+  .ticket::before { left: -12px; }
+  .ticket::after { right: -12px; }
+  .ticket__top { display: flex; justify-content: space-between; align-items: center; color: var(--accent-ink); font-size: 0.82rem; font-weight: 700; }
+  .ticket__top span { color: var(--text-2); }
+  .ticket__code { font-family: var(--f-mono); font-size: clamp(1.3rem, 2.6vw, 1.7rem); font-weight: 600; letter-spacing: 0.04em; padding-block: 16px; border-block: 1px dashed var(--line-2); text-align: center; }
+  .ticket__actions { display: flex; gap: 8px; }
+  .ticket__actions .btn { flex: 1; }
+  .ticket__foot { font-size: 0.82rem; color: var(--text-2); text-align: center; }
+</style>

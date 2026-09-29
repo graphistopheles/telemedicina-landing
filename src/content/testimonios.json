@@ -1,0 +1,6 @@
+[
+  { "id": "t1", "autor": "Camila R.", "ciudad": "Valparaíso", "rating": 5, "texto": "Mi hijo tenía fiebre a las 2 AM. En 6 minutos hablé con una pediatra que me explicó todo con calma. Nunca más urgencias por algo así.", "servicio": "pediatria", "audiencia": "pacientes", "verificado": true, "fecha": "2026-08-12" },
+  { "id": "t2", "autor": "Jorge M.", "ciudad": "Santiago", "rating": 5, "texto": "Hice el chequeo preventivo sin pedir permiso en el trabajo. Vinieron a mi casa a las 7:30 y el médico revisó los resultados conmigo por video.", "servicio": "examenes", "audiencia": "pacientes", "verificado": true, "fecha": "2026-07-28" },
+  { "id": "t3", "autor": "Valentina S.", "ciudad": "Concepción", "rating": 5, "texto": "Me costaba mucho dar el primer paso con la terapia. Poder hacerlo desde mi pieza lo cambió todo.", "servicio": "salud-mental", "audiencia": "pacientes", "verificado": true, "fecha": "2026-09-02" },
+  { "id": "t4", "autor": "Paula A.", "ciudad": "Santiago", "cargo": "Gerenta de Personas · Retail, 1.200 colaboradores", "rating": 5, "texto": "En el primer semestre bajamos las licencias cortas de forma visible, y el equipo lo valora como un beneficio real, no como un trámite.", "audiencia": "empresas", "verificado": true, "fecha": "2026-06-15" }
+]

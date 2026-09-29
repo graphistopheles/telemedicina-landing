@@ -1,0 +1,108 @@
+---
+/**
+ * SERVICIOS · Bento de 6 celdas (una por servicio).
+ * Datos → src/content/servicios.json (se ordenan por `orden`).
+ * Composición: la posición en el bento la da el orden (1ª celda grande con foto,
+ * 3ª con foto, 4ª en violeta). Fotos → src/data/imagenes.ts
+ */
+import { getCollection } from 'astro:content';
+import type { SeccionMeta, HomeCopy } from '../../data/home';
+import type { ClaveImagen } from '../../data/imagenes';
+import Section from '../ui/Section.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
+import Icon from '../ui/Icon.astro';
+import Media from '../ui/Media.astro';
+import { clp } from '../../scripts/format';
+
+interface Props { meta: SeccionMeta; copy: HomeCopy['servicios'] }
+const { meta, copy } = Astro.props;
+const servicios = (await getCollection('servicios')).sort((a, b) => a.data.orden - b.data.orden);
+
+// Variante visual por posición (editar aquí para recomponer el bento).
+const variantes: { clase: string; foto?: ClaveImagen }[] = [
+  { clase: 'c--xl', foto: 'servicio-medicina-general' },
+  { clase: 'c--tint' },
+  { clase: 'c--photo', foto: 'servicio-pediatria' },
+  { clase: 'c--accent' },
+  { clase: '' },
+  { clase: '' },
+];
+---
+
+<Section meta={meta}>
+  <div class="wrap">
+    <SectionHeader id={meta.id} titulo={copy.titulo} bajada={copy.bajada} />
+    <ul class="bento">
+      {servicios.map(({ id, data }, i) => {
+        const v = variantes[i] ?? { clase: '' };
+        return (
+          <li class:list={['cell reveal', v.clase]} style={`--d:${(i % 3) * 70}ms`}>
+            <a class="card" href="#agendar" data-cta={`servicio-${id}`}>
+              {v.foto && <Media slot={v.foto} class="card__media" />}
+              <div class="card__body">
+                <span class="card__ic"><Icon name={data.icono} size={22} /></span>
+                <h3>{data.nombre}</h3>
+                <p>{data.beneficio}</p>
+                <div class="card__foot">
+                  <span class="price"><small>Desde</small>{clp(data.precioDesde)}</span>
+                  <span class="meta">{data.duracionMin} min<br />{data.disponibilidad}</span>
+                </div>
+                {data.bonoFonasa && <span class="fonasa">Bono Fonasa</span>}
+              </div>
+              <span class="card__go" aria-hidden="true"><Icon name="arrow-up-right" size={18} /></span>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </div>
+</Section>
+
+<style>
+  .bento { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+  .bento > li { min-width: 0; }
+  @media (min-width: 720px) { .bento { grid-template-columns: repeat(2, 1fr); } .c--xl { grid-column: 1 / -1; } }
+  @media (min-width: 1080px) {
+    .bento { grid-template-columns: repeat(12, 1fr); grid-auto-rows: minmax(250px, auto); }
+    .cell { grid-column: span 4; }
+    .c--xl { grid-column: 1 / span 7; grid-row: span 2; }
+    .c--tint, .c--photo { grid-column: 8 / span 5; }
+  }
+
+  .card { position: relative; height: 100%; display: flex; flex-direction: column; border-radius: var(--r-card); overflow: hidden; background: var(--surface); border: 1px solid var(--line); text-decoration: none; transition: transform 0.6s var(--ease), box-shadow 0.6s var(--ease); }
+  .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+  .card__body { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 26px; flex: 1; }
+  .card__ic { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-ink); margin-bottom: 8px; }
+  .card h3 { font-size: 1.4rem; line-height: 1.1; }
+  .card p { color: var(--text-2); max-width: 40ch; }
+  .card__foot { margin-top: auto; padding-top: 18px; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
+  .price { display: grid; font-family: var(--f-display); font-weight: 500; font-size: 1.5rem; letter-spacing: -0.03em; line-height: 1.1; }
+  .price small { font-family: var(--f-body); font-size: 0.76rem; font-weight: 600; letter-spacing: 0; color: var(--text-2); }
+  .meta { text-align: right; font-size: 0.8rem; color: var(--text-2); line-height: 1.4; }
+  .fonasa { position: absolute; top: 28px; right: 72px; font-size: 0.74rem; font-weight: 700; color: var(--ok); }
+  .card__go { position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--bg-2); color: var(--text); transition: background-color 0.3s, color 0.3s, transform 0.5s var(--ease); }
+  .card:hover .card__go { background: var(--accent); color: var(--on-accent); transform: rotate(45deg); }
+
+  /* Celda grande con foto arriba */
+  .c--xl .card :global(.card__media) { border-radius: 0; aspect-ratio: 16 / 10; flex: 1 1 auto; min-height: 240px; }
+  .c--xl .card h3 { font-size: clamp(1.6rem, 2.4vw, 2.2rem); }
+  .c--xl .card__go { top: auto; bottom: 26px; }
+  .c--xl .fonasa { top: auto; bottom: 94px; right: 26px; }
+  .c--xl .card__foot { padding-right: 56px; }
+
+  /* Celda con foto lateral */
+  @media (min-width: 1080px) {
+    .c--photo .card { flex-direction: row; }
+    .c--photo .card :global(.card__media) { border-radius: 0; width: 42%; flex: none; }
+  }
+  @media (max-width: 1079px) { .c--photo .card :global(.card__media) { border-radius: 0; aspect-ratio: 16 / 9; } }
+
+  /* Tintes */
+  .c--tint .card { background: var(--accent-soft); border-color: transparent; }
+  .c--tint .card__ic { background: var(--surface); }
+  .c--accent .card { background: var(--accent); border-color: transparent; color: var(--on-accent); }
+  .c--accent .card p, .c--accent .meta, .c--accent .price small { color: rgba(251, 252, 255, 0.78); }
+  .c--accent .card__ic, .c--accent .card__go { background: rgba(251, 252, 255, 0.16); color: var(--on-accent); }
+  .c--accent .fonasa { color: var(--on-accent); }
+  .c--accent .card:hover .card__go { background: var(--on-accent); color: var(--accent); }
+</style>

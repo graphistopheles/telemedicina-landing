@@ -1,0 +1,86 @@
+---
+/**
+ * SEGURIDAD · Selector de lectura (paciente / empresa) + grilla sin separación.
+ * Cada sello muestra un mensaje distinto según la lectura elegida.
+ * Sellos → src/content/certificaciones.json (campos paraPacientes / paraEmpresas)
+ * Textos → copy.seguridad (home.ts)
+ */
+import { getCollection } from 'astro:content';
+import type { SeccionMeta, HomeCopy } from '../../data/home';
+import Section from '../ui/Section.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
+import Icon from '../ui/Icon.astro';
+
+interface Props { meta: SeccionMeta; copy: HomeCopy['seguridad'] }
+const { meta, copy } = Astro.props;
+const sellos = await getCollection('certificaciones');
+// Ícono según el tipo de sello (editable).
+const iconoTipo = { normativa: 'doc', seguridad: 'lock', interoperabilidad: 'plug', acreditacion: 'seal' } as const;
+---
+
+<Section meta={meta} tono="bg-2" class="cmp">
+  <div class="wrap">
+    <div class="cmp__head">
+      <SectionHeader id={meta.id} titulo={copy.titulo} bajada={copy.bajada} />
+      <div class="lens reveal" role="radiogroup" aria-label="Ver beneficios para">
+        <input type="radio" name="lens" id="lens-p" value="pacientes" checked />
+        <label for="lens-p">Si eres paciente</label>
+        <input type="radio" name="lens" id="lens-e" value="empresas" />
+        <label for="lens-e">Si eres empresa</label>
+      </div>
+    </div>
+
+    <ul class="seals reveal">
+      {sellos.map(({ data }) => (
+        <li class="seal">
+          <div class="seal__head">
+            <span class="seal__badge">{data.sigla}</span>
+            <Icon name={iconoTipo[data.tipo]} size={22} />
+          </div>
+          <h3>{data.nombre}</h3>
+          <p class="seal__emisor">{data.emisor}</p>
+          <p class="msg msg--p">{data.paraPacientes}</p>
+          <p class="msg msg--e">{data.paraEmpresas}</p>
+        </li>
+      ))}
+      <li class="seal seal--cta">
+        <Icon name="shield" size={30} />
+        <h3>Centro de confianza</h3>
+        <p>Políticas, auditorías, SLA y documentación técnica de integración.</p>
+        <a class="btn btn--ink btn--sm" href="#contacto-empresas" data-cta="seguridad-docs">Solicitar documentación<span class="btn__ic"><Icon name="arrow" /></span></a>
+      </li>
+    </ul>
+  </div>
+</Section>
+
+<style>
+  .cmp__head { display: grid; gap: 0; }
+  @media (min-width: 1000px) { .cmp__head { grid-template-columns: 1fr auto; align-items: end; gap: 40px; } .cmp__head .lens { margin-bottom: clamp(48px, 6vw, 80px); } }
+
+  .lens { justify-self: start; display: inline-flex; padding: 4px; border-radius: var(--r-pill); background: var(--surface); border: 1px solid var(--line); margin-bottom: 32px; }
+  .lens input { position: absolute; opacity: 0; pointer-events: none; }
+  .lens label { padding: 10px 18px; border-radius: var(--r-pill); font-weight: 700; font-size: 0.92rem; cursor: pointer; color: var(--text-2); transition: background-color 0.3s, color 0.3s; white-space: nowrap; }
+  .lens input:checked + label { background: var(--text); color: var(--bg); }
+  .lens input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Grilla sin separación: líneas internas, borde exterior redondeado */
+  .seals { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; border-radius: var(--r-card); overflow: hidden; background: var(--surface); border: 1px solid var(--line); }
+  @media (min-width: 700px) { .seals { grid-template-columns: repeat(2, 1fr); } .seal--cta { grid-column: span 2; } }
+  @media (min-width: 1080px) { .seals { grid-template-columns: repeat(4, 1fr); } .seal--cta { grid-column: span 2; } }
+  .seal { display: flex; flex-direction: column; gap: 8px; padding: 28px; min-height: 260px; box-shadow: inset -1px -1px 0 var(--line); }
+  .seal__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; color: var(--accent-ink); }
+  .seal__badge { font-family: var(--f-mono); font-weight: 600; font-size: 0.76rem; letter-spacing: 0.04em; padding: 6px 12px; border-radius: var(--r-pill); background: var(--accent-soft); color: var(--accent-ink); }
+  .seal h3 { font-size: 1.2rem; line-height: 1.15; }
+  .seal__emisor { font-size: 0.82rem; color: var(--text-2); }
+  .msg { margin-top: auto; padding-top: 16px; color: var(--text); font-size: 0.95rem; }
+  @media (prefers-reduced-motion: no-preference) { .msg { animation: fade 0.5s var(--ease); } }
+  .msg--e { display: none; }
+  :global(.cmp:has(#lens-e:checked)) .msg--p { display: none; }
+  :global(.cmp:has(#lens-e:checked)) .msg--e { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } }
+
+  .seal--cta { background: var(--accent-soft); justify-content: center; color: var(--text); }
+  .seal--cta > :global(svg) { color: var(--accent-ink); }
+  .seal--cta p { color: var(--text-2); max-width: 40ch; }
+  .seal--cta .btn { align-self: flex-start; margin-top: 12px; }
+</style>

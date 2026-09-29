@@ -1,0 +1,75 @@
+---
+/**
+ * ECOSISTEMA · Recorrido conectado + grilla sin separación (estilo IntegratedBio).
+ * Productos → src/content/ecosistema.json   ·   Textos → copy.ecosistema (home.ts)
+ * `recorrido` (abajo) define la secuencia que muestra la franja superior.
+ */
+import { getCollection } from 'astro:content';
+import type { SeccionMeta, HomeCopy } from '../../data/home';
+import Section from '../ui/Section.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
+import Icon from '../ui/Icon.astro';
+
+interface Props { meta: SeccionMeta; copy: HomeCopy['ecosistema'] }
+const { meta, copy } = Astro.props;
+const productos = (await getCollection('ecosistema')).sort((a, b) => a.data.orden - b.data.orden);
+
+// Recorrido del paciente dentro del ecosistema (editable).
+const recorrido = [
+  { icono: 'sparkle', texto: 'Pregunta a AIda' },
+  { icono: 'pulse', texto: 'Mide con Triage' },
+  { icono: 'video', texto: 'Consulta por video' },
+  { icono: 'pill', texto: 'Recibe en Farmazon' },
+];
+// Tinte de cada celda, en orden (editable).
+const tintes = ['t-soft', 't-ink', 't-plain', 't-plain', 't-accent', 't-soft'];
+---
+
+<Section meta={meta}>
+  <div class="wrap">
+    <SectionHeader id={meta.id} etiqueta={copy.eyebrow} titulo={copy.titulo} bajada={copy.bajada} />
+
+    <ol class="flow reveal" aria-label="Recorrido en el ecosistema">
+      {recorrido.map((r) => <li><Icon name={r.icono} size={18} />{r.texto}</li>)}
+    </ol>
+
+    <ul class="grid reveal" style="--d:100ms">
+      {productos.map(({ data }, i) => (
+        <li class:list={['tile', tintes[i]]}>
+          <span class="tile__ic"><Icon name={data.icono} size={30} /></span>
+          <div>
+            <p class="tile__tipo">{data.tipo}</p>
+            <h3>{data.nombre}</h3>
+            <p class="tile__txt">{data.beneficio}</p>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</Section>
+
+<style>
+  .flow { list-style: none; margin: 0 0 20px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .flow li { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: var(--r-pill); background: var(--surface); border: 1px solid var(--line); font-weight: 700; font-size: 0.9rem; }
+  .flow li :global(svg) { color: var(--accent-ink); }
+  .flow li + li::before { content: ''; width: 18px; height: 1px; background: var(--line-2); margin-left: -26px; margin-right: 8px; }
+  @media (max-width: 640px) { .flow li + li::before { display: none; } }
+
+  .grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; border-radius: var(--r-card); overflow: hidden; border: 1px solid var(--line); }
+  @media (min-width: 700px) { .grid { grid-template-columns: repeat(2, 1fr); } .grid .tile { min-height: 300px; } }
+  @media (min-width: 1080px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  .tile { min-height: 220px; padding: 28px; display: flex; flex-direction: column; justify-content: space-between; gap: 40px; background: var(--surface); box-shadow: inset -1px -1px 0 var(--line); transition: background-color 0.4s; }
+  .tile__ic { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; border: 1px solid currentColor; opacity: 0.9; transition: transform 0.6s var(--ease); }
+  .tile:hover .tile__ic { transform: rotate(-12deg) scale(1.05); }
+  .tile__tipo { font-size: 0.82rem; font-weight: 700; color: var(--text-2); margin-bottom: 6px; }
+  .tile h3 { font-size: 1.6rem; line-height: 1.1; margin-bottom: 10px; }
+  .tile__txt { color: var(--text-2); max-width: 34ch; }
+
+  .t-soft { background: var(--accent-soft); color: var(--text); }
+  .t-soft .tile__ic { color: var(--accent-ink); }
+  .t-ink { background: var(--text); color: var(--bg); }
+  .t-ink .tile__tipo, .t-ink .tile__txt { color: color-mix(in oklab, var(--bg) 70%, transparent); }
+  .t-accent { background: var(--accent); color: var(--on-accent); }
+  .t-accent .tile__tipo, .t-accent .tile__txt { color: rgba(251, 252, 255, 0.78); }
+  .t-plain .tile__ic { color: var(--accent-ink); }
+</style>

@@ -1,0 +1,80 @@
+---
+/**
+ * Formulario de captación B2B (lead magnet / demo).
+ * NO envía datos: `data-endpoint` queda vacío hasta conectar el CRM
+ * (HubSpot, Salesforce o una Lambda en AWS). Mientras tanto muestra un
+ * estado de éxito local para validar el flujo.
+ */
+import Icon from './Icon.astro';
+
+type Campo = 'nombre' | 'email' | 'empresa' | 'colaboradores';
+interface Props { id: string; cta: string; campos: Campo[]; icono?: string }
+const { id, cta, campos, icono = 'arrow' } = Astro.props;
+
+const def: Record<Campo, { label: string; type: string; auto?: string; placeholder: string }> = {
+  nombre: { label: 'Nombre y apellido', type: 'text', auto: 'name', placeholder: 'Paula Andrade' },
+  email: { label: 'Email corporativo', type: 'email', auto: 'email', placeholder: 'paula@empresa.cl' },
+  empresa: { label: 'Empresa', type: 'text', auto: 'organization', placeholder: 'Empresa S.A.' },
+  colaboradores: { label: 'N° de colaboradores', type: 'text', placeholder: '250' },
+};
+---
+
+<form class="lf" data-lead={id} data-endpoint="" novalidate>
+  <div class="lf__grid">
+    {campos.map((c) => (
+      <label class:list={['lf__f', { 'lf__f--full': c === 'email' }]}>
+        <span>{def[c].label}</span>
+        <input name={c} type={def[c].type} autocomplete={def[c].auto} placeholder={def[c].placeholder} required />
+      </label>
+    ))}
+  </div>
+  <label class="lf__ok">
+    <input type="checkbox" name="consentimiento" required />
+    <span>Acepto recibir comunicaciones de Medismart según la <a href="/privacidad">política de privacidad</a>.</span>
+  </label>
+  <button class="btn btn--primary btn--block" type="submit" data-cta={`lead-${id}`}>
+    {cta}<span class="btn__ic"><Icon name={icono} /></span>
+  </button>
+  <p class="lf__msg" role="status" hidden></p>
+</form>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>('form[data-lead]').forEach((form) => {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const msg = form.querySelector<HTMLElement>('.lf__msg')!;
+      if (!form.checkValidity()) {
+        form.classList.add('is-touched');
+        msg.hidden = false;
+        msg.textContent = 'Revisa los campos marcados para continuar.';
+        (form.querySelector(':invalid') as HTMLElement | null)?.focus();
+        return;
+      }
+      // TODO: POST a form.dataset.endpoint cuando se conecte el CRM.
+      (window as any).dataLayer?.push({ event: 'lead_submit', lead: form.dataset.lead });
+      form.querySelector('.lf__grid')!.remove();
+      form.querySelector('.lf__ok')!.remove();
+      form.querySelector('button')!.remove();
+      msg.hidden = false;
+      msg.classList.add('is-ok');
+      msg.textContent = '¡Listo! Te escribiremos en menos de 24 horas hábiles.';
+    });
+  });
+</script>
+
+<style>
+  /* Pensado para fondo violeta profundo (zona Empresas). */
+  .lf { display: grid; gap: 16px; }
+  .lf__grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); }
+  .lf__f { display: grid; gap: 8px; font-size: 0.86rem; font-weight: 600; color: var(--on-deep-2); }
+  .lf__f--full { grid-column: 1 / -1; }
+  .lf input:not([type='checkbox']) { width: 100%; min-width: 0; min-height: 50px; padding: 0 16px; border-radius: var(--r-field); border: 1px solid var(--line-deep); background: var(--deep); color: var(--on-deep); font-size: 1rem; }
+  .lf input::placeholder { color: var(--on-deep-3); }
+  .lf input:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
+  .lf.is-touched input:invalid { border-color: #ffb3c1; }
+  .lf__ok { display: flex; gap: 10px; align-items: flex-start; font-size: 0.84rem; color: var(--on-deep-2); }
+  .lf__ok input { margin-top: 3px; accent-color: var(--accent); width: 17px; height: 17px; }
+  .lf__ok a { color: var(--on-deep); }
+  .lf__msg { font-size: 0.9rem; font-weight: 600; color: #ffb3c1; }
+  .lf__msg.is-ok { padding: 16px 18px; border-radius: var(--r-field); background: rgba(140, 194, 242, 0.12); color: var(--teal); }
+</style>

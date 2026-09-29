@@ -1,0 +1,214 @@
+---
+/**
+ * EMPRESAS · Zona violeta profunda (único cambio de tema de la página, marca la ruta B2B).
+ * Orden: encabezado + CTA → métricas → foto + testimonio + pilares → ROI → informe + demo.
+ * Métricas → src/content/metricas.json   ·   Testimonio → testimonios.json (audiencia "empresas")
+ * Textos → copy.empresas (home.ts)   ·   Supuestos ROI → src/data/roi.ts
+ * Foto → slot "empresas-equipo" (src/data/imagenes.ts)
+ * NO cambiar los id (roi, contacto-empresas, roiForm, roi*): los usan enlaces y la analítica.
+ */
+import { getCollection } from 'astro:content';
+import type { SeccionMeta, HomeCopy } from '../../data/home';
+import { roi } from '../../data/roi';
+import Section from '../ui/Section.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
+import Icon from '../ui/Icon.astro';
+import Media from '../ui/Media.astro';
+import LeadForm from '../ui/LeadForm.astro';
+
+interface Props { meta: SeccionMeta; copy: HomeCopy['empresas'] }
+const { meta, copy } = Astro.props;
+
+const metricas = await getCollection('metricas', ({ data }) => data.audiencia === 'empresas');
+const [testimonio] = await getCollection('testimonios', ({ data }) => data.audiencia === 'empresas');
+const iconos = ['calendar', 'chart', 'users']; // uno por pilar, en orden
+const d = roi.defaults;
+---
+
+<Section meta={meta} tono="deep" class="biz">
+  <div class="biz__glow" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="biz__head">
+      <SectionHeader id={meta.id} etiqueta={copy.eyebrow} titulo={copy.titulo} bajada={copy.bajada} dark />
+      <div class="biz__ctas reveal">
+        <a class="btn btn--primary" href={copy.ctaPrimario.href} data-cta="b2b-demo">{copy.ctaPrimario.label}<span class="btn__ic"><Icon name="arrow" /></span></a>
+        <a class="btn btn--ghost-light" href={copy.ctaSecundario.href} data-cta="b2b-roi">{copy.ctaSecundario.label}</a>
+      </div>
+    </div>
+
+    <!-- Métricas (liderazgo de pensamiento) -->
+    <ul class="kpis">
+      {metricas.map(({ data }, i) => (
+        <li class="kpi reveal" style={`--d:${i * 90}ms`}>
+          <strong>{data.valor}</strong>
+          <span class="kpi__l">{data.etiqueta}</span>
+          <p>{data.contexto}</p>
+          <small>{data.fuente}</small>
+        </li>
+      ))}
+    </ul>
+
+    <!-- Foto + testimonio + pilares -->
+    <div class="story">
+      <Media slot="empresas-equipo" ratio="4 / 3" class="story__media reveal" />
+      <div class="story__txt">
+        {testimonio && (
+          <figure class="bq reveal">
+            <blockquote>{testimonio.data.texto}</blockquote>
+            <figcaption><strong>{testimonio.data.autor}</strong><span>{testimonio.data.cargo}</span></figcaption>
+          </figure>
+        )}
+        <ul class="pillars">
+          {copy.pilares.map((p, i) => (
+            <li class="reveal" style={`--d:${i * 80}ms`}>
+              <span class="pillars__ic"><Icon name={iconos[i]} size={20} /></span>
+              <div><h3>{p.titulo}</h3><p>{p.texto}</p></div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Calculadora de ROI (lead magnet interactivo) -->
+    <div class="roi reveal" id="roi">
+      <div class="roi__intro">
+        <h3>{copy.roi.titulo}</h3>
+        <p>{copy.roi.bajada}</p>
+      </div>
+      <form class="roi__form" id="roiForm" data-roi={JSON.stringify(roi)} onsubmit="return false">
+        <label><span>Colaboradores</span><input type="number" name="colaboradores" min="10" step="10" value={d.colaboradores} inputmode="numeric" /></label>
+        <label><span>Sueldo bruto promedio (CLP)</span><input type="number" name="sueldo" min="400000" step="50000" value={d.sueldo} inputmode="numeric" /></label>
+        <label><span>Días de ausentismo por persona al año</span><input type="number" name="dias" min="0" max="60" step="1" value={d.dias} inputmode="numeric" /></label>
+        <label><span>Rotación anual (%)</span><input type="number" name="rotacion" min="0" max="100" step="1" value={d.rotacion} inputmode="numeric" /></label>
+      </form>
+      <div class="roi__out" aria-live="polite">
+        <p class="roi__k">Ahorro anual estimado</p>
+        <strong id="roiAhorro">-</strong>
+        <dl>
+          <div><dt>Por menor ausentismo</dt><dd id="roiAus">-</dd></div>
+          <div><dt>Por menor rotación</dt><dd id="roiRot">-</dd></div>
+          <div><dt>Inversión anual</dt><dd id="roiInv">-</dd></div>
+          <div class="roi__x"><dt>Retorno</dt><dd id="roiX">-</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Conversión: informe descargable + demo -->
+    <div class="conv" id="contacto-empresas">
+      <article class="magnet reveal">
+        <div class="magnet__cover" aria-hidden="true">
+          <!-- PORTADA DEL INFORME: reemplazar este bloque por la portada real (public/img/empresas/informe-2026.jpg, 600 × 800) -->
+          <span>Informe 2026</span>
+          <strong>El costo oculto del ausentismo</strong>
+          <span class="magnet__brand">medismart</span>
+        </div>
+        <div class="magnet__body">
+          <h3>{copy.leadMagnet.titulo}</h3>
+          <p>{copy.leadMagnet.texto}</p>
+          <LeadForm id="whitepaper" cta={copy.leadMagnet.cta} campos={['nombre', 'email', 'empresa']} icono="download" />
+        </div>
+      </article>
+
+      <article class="demo reveal" style="--d:100ms">
+        <h3>Agenda una demo de 30 minutos</h3>
+        <p>Te mostramos el tablero de RR.HH., el flujo del colaborador y un caso de tu industria.</p>
+        <LeadForm id="demo" cta="Agendar demo" campos={['nombre', 'email', 'empresa', 'colaboradores']} icono="calendar" />
+      </article>
+    </div>
+  </div>
+</Section>
+
+<script>
+  import { clp } from '../../scripts/format';
+
+  const form = document.getElementById('roiForm') as HTMLFormElement | null;
+  if (form) {
+    const R = JSON.parse(form.dataset.roi!);
+    const set = (id: string, v: string) => (document.getElementById(id)!.textContent = v);
+    const calc = () => {
+      const f = new FormData(form);
+      const n = Math.max(0, Number(f.get('colaboradores')));
+      const sueldo = Math.max(0, Number(f.get('sueldo')));
+      const dias = Math.max(0, Number(f.get('dias')));
+      const rot = Math.max(0, Number(f.get('rotacion'))) / 100;
+
+      const aus = n * dias * (sueldo / R.diasLaborales) * R.reduccionAusentismo;
+      const rotAhorro = n * rot * sueldo * 12 * R.costoReemplazo * R.reduccionRotacion;
+      const inv = n * R.precioPorColaborador * 12;
+      const ahorro = aus + rotAhorro;
+
+      set('roiAus', clp(aus));
+      set('roiRot', clp(rotAhorro));
+      set('roiInv', clp(inv));
+      set('roiAhorro', clp(ahorro));
+      set('roiX', inv > 0 ? `${(ahorro / inv).toFixed(1).replace('.', ',')}×` : '-');
+    };
+    form.addEventListener('input', calc);
+    calc();
+  }
+</script>
+
+<style>
+  :global(section.section.biz) { overflow: clip; }
+  .biz__glow { position: absolute; width: 1100px; height: 1100px; right: -400px; top: -520px; border-radius: 50%; background: radial-gradient(circle, color-mix(in oklab, var(--accent) 34%, transparent), transparent 62%); pointer-events: none; }
+  .biz .wrap { position: relative; }
+  .biz :global(.h2) { color: var(--on-deep); }
+  .biz__head { display: grid; }
+  .biz__ctas { display: flex; flex-wrap: wrap; gap: 10px; margin: -32px 0 clamp(64px, 8vw, 104px); }
+
+  .kpis { list-style: none; margin: 0 0 clamp(72px, 9vw, 120px); padding: 0; display: grid; grid-template-columns: 1fr; border-top: 1px solid var(--line-deep); }
+  @media (min-width: 640px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1080px) { .kpis { grid-template-columns: repeat(4, 1fr); } }
+  .kpi { padding: 32px 24px 32px 0; display: grid; gap: 8px; align-content: start; border-bottom: 1px solid var(--line-deep); }
+  @media (min-width: 1080px) { .kpi { border-bottom: 0; } .kpi + .kpi { padding-left: 28px; border-left: 1px solid var(--line-deep); } }
+  .kpi strong { font-family: var(--f-display); font-weight: 300; font-size: clamp(3.4rem, 6vw, 5rem); line-height: 0.9; letter-spacing: -0.06em; color: var(--on-deep); }
+  .kpi__l { font-family: var(--f-display); font-weight: 500; font-size: 1.1rem; letter-spacing: -0.02em; color: var(--teal); }
+  .kpi p { color: var(--on-deep-2); font-size: 0.95rem; max-width: 30ch; }
+  .kpi small { font-size: 0.76rem; color: var(--on-deep-3); margin-top: 6px; }
+
+  .story { display: grid; gap: 40px; margin-bottom: clamp(72px, 9vw, 120px); }
+  @media (min-width: 1000px) { .story { grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; } }
+  .story :global(.story__media) { border-radius: 28px; }
+  .story__txt { display: grid; gap: 40px; }
+  .bq { margin: 0; display: grid; gap: 16px; }
+  .bq blockquote { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: clamp(1.4rem, 2.4vw, 1.9rem); line-height: 1.3; letter-spacing: -0.03em; }
+  .bq figcaption { display: grid; font-size: 0.92rem; }
+  .bq figcaption span { color: var(--on-deep-2); }
+  .pillars { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-deep); }
+  .pillars li { display: grid; grid-template-columns: auto 1fr; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--line-deep); }
+  .pillars__ic { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-deep); color: var(--teal); }
+  .pillars h3 { font-size: 1.1rem; margin-bottom: 4px; }
+  .pillars p { color: var(--on-deep-2); font-size: 0.95rem; }
+
+  .roi { display: grid; gap: 32px; padding: clamp(24px, 4vw, 48px); border-radius: 28px; background: var(--deep-2); border: 1px solid var(--line-deep); margin-bottom: 14px; }
+  @media (min-width: 1080px) { .roi { grid-template-columns: 0.8fr 1fr 1fr; align-items: start; gap: 40px; } }
+  .roi__intro h3 { font-size: clamp(1.7rem, 2.6vw, 2.2rem); line-height: 1.08; margin-bottom: 12px; }
+  .roi__intro p { color: var(--on-deep-2); }
+  .roi__form { display: grid; gap: 14px; }
+  .roi__form label { display: grid; gap: 8px; font-size: 0.86rem; font-weight: 600; color: var(--on-deep-2); }
+  .roi__form input { min-height: 52px; padding: 0 16px; border-radius: var(--r-field); border: 1px solid var(--line-deep); background: var(--deep); color: var(--on-deep); font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .roi__form input:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
+  .roi__out { display: grid; gap: 14px; padding: 28px; border-radius: var(--r-card); background: var(--on-deep); color: var(--deep); }
+  .roi__k { font-weight: 700; color: var(--accent-ink); }
+  .roi__out > strong { font-family: var(--f-display); font-weight: 500; font-size: clamp(2.2rem, 3.6vw, 3rem); line-height: 1; letter-spacing: -0.05em; word-break: break-word; font-variant-numeric: tabular-nums; }
+  .roi__out dl { margin: 0; display: grid; gap: 8px; font-size: 0.92rem; }
+  .roi__out dl div { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(3, 12, 67, 0.12); }
+  .roi__out dt { color: #464c6c; }
+  .roi__out dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .roi__x { border: 0 !important; }
+  .roi__x dd { font-family: var(--f-display); font-size: 1.6rem; color: #6630b8; }
+  @media (prefers-color-scheme: dark) { .roi__k, .roi__x dd { color: #6630b8; } }
+
+  .conv { display: grid; gap: 14px; }
+  @media (min-width: 1080px) { .conv { grid-template-columns: 1.25fr 1fr; } }
+  .magnet, .demo { border-radius: 28px; padding: clamp(24px, 3.5vw, 40px); background: var(--deep-2); border: 1px solid var(--line-deep); }
+  .magnet { display: grid; gap: 32px; }
+  @media (min-width: 720px) { .magnet { grid-template-columns: 200px 1fr; } }
+  .magnet__cover { aspect-ratio: 3 / 4; max-width: 220px; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: linear-gradient(160deg, var(--accent), var(--blue)); color: var(--on-accent); box-shadow: 16px 16px 0 -4px rgba(140, 194, 242, 0.2); transform: rotate(-3deg); transition: transform 0.7s var(--ease); }
+  .magnet:hover .magnet__cover { transform: rotate(0deg); }
+  .magnet__cover span:first-child { font-size: 0.76rem; font-weight: 700; opacity: 0.85; }
+  .magnet__cover strong { font-family: var(--f-display); font-weight: 500; font-size: 1.3rem; line-height: 1.1; letter-spacing: -0.03em; }
+  .magnet__brand { margin-top: auto; font-family: var(--f-display); font-weight: 600; letter-spacing: -0.04em; }
+  .magnet h3, .demo h3 { font-size: 1.4rem; margin-bottom: 10px; }
+  .magnet__body > p, .demo > p { color: var(--on-deep-2); margin-bottom: 24px; }
+</style>

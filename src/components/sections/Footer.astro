@@ -1,0 +1,65 @@
+---
+/**
+ * FOOTER · Mapa del sitio + contacto + wordmark gigante (estilo IntegratedBio).
+ * Enlaces → navFooter en src/data/site.ts   ·   Contacto → site (site.ts)
+ * Texto legal → párrafo .ft__legal abajo (validar con Legal antes de cambiar).
+ */
+import { site, navFooter } from '../../data/site';
+import Icon from '../ui/Icon.astro';
+import Logo from '../ui/Logo.astro';
+const anio = new Date().getFullYear();
+---
+
+<footer class="ft">
+  <div class="wrap">
+    <div class="ft__top">
+      <div class="ft__brand">
+        <p class="ft__lema">{site.claim}.</p>
+        <address>
+          <a href={site.whatsapp} target="_blank" rel="noopener"><Icon name="whatsapp" size={18} /> {site.telefono}</a>
+          <a href={`mailto:${site.email}`}>{site.email}</a>
+          <span>{site.horario}</span>
+        </address>
+      </div>
+      <nav class="ft__nav" aria-label="Mapa del sitio">
+        {navFooter.map((g) => (
+          <div>
+            <h2>{g.titulo}</h2>
+            <ul>{g.links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
+          </div>
+        ))}
+      </nav>
+    </div>
+
+    <!-- Logo oficial a todo el ancho (estilo IntegratedBio) -->
+    <div class="ft__word" aria-hidden="true"><Logo uid="logo-ft" class="ft__logo" /></div>
+
+    <div class="ft__legal">
+      <p>Prestaciones de telemedicina conforme a la Ley N° 21.541. Profesionales inscritos en el Registro Nacional de Prestadores Individuales de la Superintendencia de Salud. En caso de emergencia, llama al 131 (SAMU).</p>
+      <p>© {anio} {site.marcaCompleta}</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .ft { background: var(--bg); border-top: 1px solid var(--line); padding: clamp(64px, 8vw, 104px) 0 110px; overflow: clip; }
+  @media (min-width: 760px) { .ft { padding-bottom: 40px; } }
+  .ft__top { display: grid; gap: 48px; }
+  @media (min-width: 1000px) { .ft__top { grid-template-columns: 1fr 1.5fr; } }
+  .ft__lema { font-family: var(--f-display); font-weight: 500; font-size: clamp(1.6rem, 2.6vw, 2.2rem); line-height: 1.1; letter-spacing: -0.04em; max-width: 22ch; }
+  address { font-style: normal; display: grid; gap: 6px; margin-top: 28px; color: var(--text-2); }
+  address a { display: inline-flex; align-items: center; gap: 8px; color: var(--text); font-weight: 700; }
+  .ft a { text-decoration: none; }
+  .ft a:hover { color: var(--accent-ink); }
+  .ft__nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 32px; }
+  .ft__nav h2 { font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; color: var(--text-2); margin-bottom: 16px; }
+  .ft__nav ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; font-weight: 600; }
+
+  .ft__word { margin: clamp(56px, 8vw, 96px) 0 0; color: var(--navy); user-select: none; }
+  .ft__word :global(.ft__logo) { width: 100%; height: auto; }
+  @media (prefers-color-scheme: dark) { .ft__word { color: var(--text); } }
+
+  .ft__legal { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--line); display: grid; gap: 12px; font-size: 0.84rem; color: var(--text-2); }
+  @media (min-width: 960px) { .ft__legal { grid-template-columns: 1fr auto; gap: 48px; } }
+  .ft__legal p:first-child { max-width: 80ch; }
+</style>

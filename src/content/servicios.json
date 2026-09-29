@@ -1,0 +1,8 @@
+[
+  { "id": "medicina-general", "nombre": "Medicina general", "beneficio": "Resfríos, fiebre, dolores y recetas, sin moverte del sillón.", "icono": "stethoscope", "precioDesde": 9990, "duracionMin": 20, "disponibilidad": "24/7", "bonoFonasa": true, "orden": 1 },
+  { "id": "salud-mental", "nombre": "Psicología", "beneficio": "Un espacio seguro para hablar, con profesionales que de verdad te escuchan.", "icono": "mind", "precioDesde": 19990, "duracionMin": 45, "disponibilidad": "Lun a sáb · 8:00 a 22:00", "bonoFonasa": true, "orden": 2 },
+  { "id": "pediatria", "nombre": "Pediatría", "beneficio": "Fiebre a medianoche o dudas de crianza: un pediatra te responde hoy.", "icono": "child", "precioDesde": 14990, "duracionMin": 20, "disponibilidad": "24/7", "bonoFonasa": true, "orden": 3 },
+  { "id": "ginecologia", "nombre": "Ginecología", "beneficio": "Anticoncepción, controles y salud sexual con total privacidad.", "icono": "venus", "precioDesde": 17990, "duracionMin": 30, "disponibilidad": "Lun a vie · 9:00 a 20:00", "bonoFonasa": true, "orden": 4 },
+  { "id": "nutricion", "nombre": "Nutrición", "beneficio": "Un plan de alimentación real, que se adapta a tu rutina y no al revés.", "icono": "leaf", "precioDesde": 15990, "duracionMin": 40, "disponibilidad": "Lun a sáb", "bonoFonasa": false, "orden": 5 },
+  { "id": "examenes", "nombre": "Exámenes a domicilio", "beneficio": "Tomamos la muestra en tu casa y ves los resultados en la app.", "icono": "vial", "precioDesde": 12990, "duracionMin": 15, "disponibilidad": "Lun a sáb · 7:00 a 12:00", "bonoFonasa": true, "orden": 6 }
+]

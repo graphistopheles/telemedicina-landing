@@ -1,0 +1,57 @@
+---
+/**
+ * CTA FINAL · Dos puertas, una por audiencia.
+ * Textos → copy.agendar (home.ts)   ·   WhatsApp y email → src/data/site.ts
+ */
+import type { SeccionMeta, HomeCopy } from '../../data/home';
+import { site } from '../../data/site';
+import Section from '../ui/Section.astro';
+import Icon from '../ui/Icon.astro';
+
+interface Props { meta: SeccionMeta; copy: HomeCopy['agendar'] }
+const { meta, copy } = Astro.props;
+---
+
+<Section meta={meta}>
+  <div class="wrap">
+    <h2 id={`${meta.id}-titulo`} class="sr-only">Empieza hoy</h2>
+    <div class="doors">
+      <div class="door door--p reveal">
+        <p class="door__k">Para personas</p>
+        <h3>{copy.pacientes.titulo}</h3>
+        <p class="door__t">{copy.pacientes.texto}</p>
+        <div class="door__ctas">
+          <a class="btn btn--primary" href={site.appUrl} data-cta="final-consultar">{copy.pacientes.cta}<span class="btn__ic"><Icon name="arrow" /></span></a>
+          <a class="btn btn--ghost" href={site.whatsapp} target="_blank" rel="noopener" data-cta="final-whatsapp"><Icon name="whatsapp" size={18} /> WhatsApp</a>
+        </div>
+      </div>
+      <div class="door door--e reveal" style="--d:100ms">
+        <p class="door__k">Para empresas</p>
+        <h3>{copy.empresas.titulo}</h3>
+        <p class="door__t">{copy.empresas.texto}</p>
+        <div class="door__ctas">
+          <a class="btn btn--light" href="#contacto-empresas" data-cta="final-demo">{copy.empresas.cta}<span class="btn__ic"><Icon name="arrow" /></span></a>
+          <a class="btn btn--ghost-light" href={`mailto:${site.emailEmpresas}`} data-cta="final-email-b2b">Escribir por email</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</Section>
+
+<style>
+  .doors { display: grid; gap: 14px; }
+  @media (min-width: 960px) { .doors { grid-template-columns: 1fr 1fr; } }
+  .door { position: relative; overflow: hidden; min-height: 420px; display: flex; flex-direction: column; gap: 18px; padding: clamp(28px, 5vw, 56px); border-radius: 32px; }
+  .door__k { font-weight: 700; font-size: 0.9rem; }
+  .door h3 { font-size: clamp(2rem, 3.6vw, 3rem); line-height: 1.04; letter-spacing: -0.045em; max-width: 14ch; }
+  .door__t { max-width: 42ch; }
+  .door__ctas { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; padding-top: 24px; }
+  .door--p { background: var(--accent-soft); }
+  .door--p .door__k { color: var(--accent-ink); }
+  .door--p .door__t { color: var(--text-2); }
+  .door--e { background: var(--deep); color: var(--on-deep); }
+  .door--e .door__k { color: var(--teal); }
+  .door--e .door__t { color: var(--on-deep-2); }
+  .door--e::after { content: ''; position: absolute; width: 520px; height: 520px; right: -200px; bottom: -260px; border-radius: 50%; background: radial-gradient(circle, color-mix(in oklab, var(--accent) 45%, transparent), transparent 65%); pointer-events: none; }
+  .door > * { position: relative; z-index: 1; }
+</style>

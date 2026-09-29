@@ -1,0 +1,131 @@
+---
+/**
+ * RECURSOS · Hub editorial con pestañas por audiencia (estilo "Newsroom").
+ * Cada pestaña: recurso más reciente destacado con foto + lista del resto.
+ * Ambas pestañas están en el HTML (buenas para SEO); CSS muestra una a la vez.
+ * Recursos → src/content/recursos/*.md   ·   Títulos → copy.recursos (home.ts)
+ * Foto del destacado → slot "recurso-destacado"   ·   Redes → src/data/site.ts
+ */
+import { getCollection, getEntry } from 'astro:content';
+import type { SeccionMeta, HomeCopy } from '../../data/home';
+import { site } from '../../data/site';
+import Section from '../ui/Section.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
+import Icon from '../ui/Icon.astro';
+import Media from '../ui/Media.astro';
+
+interface Props { meta: SeccionMeta; copy: HomeCopy['recursos'] }
+const { meta, copy } = Astro.props;
+
+const todos = await Promise.all(
+  (await getCollection('recursos'))
+    .sort((a, b) => b.data.fecha.valueOf() - a.data.fecha.valueOf())
+    .map(async (r) => ({ ...r, pack: r.data.packRelacionado ? await getEntry(r.data.packRelacionado) : undefined }))
+);
+const columnas = (['pacientes', 'empresas'] as const).map((aud) => ({
+  aud,
+  ...copy.columnas[aud],
+  items: todos.filter((r) => r.data.audiencia === aud || r.data.audiencia === 'ambos'),
+}));
+
+// Etiquetas visibles de formato y canal (editables).
+const formato = { articulo: 'Artículo', guia: 'Guía', whitepaper: 'Whitepaper', webinar: 'Webinar', reel: 'Reels', calculadora: 'Herramienta' };
+const canal = { blog: 'Blog', linkedin: 'LinkedIn', instagram: 'Instagram', tiktok: 'TikTok', evento: 'En vivo' };
+const fecha = new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'long' });
+const metaDe = (d: (typeof todos)[number]['data']) =>
+  [formato[d.formato], canal[d.canal], d.lecturaMin ? `${d.lecturaMin} min` : d.formato === 'webinar' ? fecha.format(d.fecha) : null].filter(Boolean).join(', ');
+---
+
+<Section meta={meta} class="res">
+  <div class="wrap">
+    <SectionHeader id={meta.id} titulo={copy.titulo} />
+
+    <div class="tabs reveal" role="tablist" aria-label="Recursos por audiencia">
+      {columnas.map((c, i) => (
+        <>
+          <input type="radio" name="res-tab" id={`tab-${c.aud}`} checked={i === 0} />
+          <label for={`tab-${c.aud}`}>{c.titulo}</label>
+        </>
+      ))}
+    </div>
+
+    {columnas.map((col) => {
+      const [top, ...rest] = col.items;
+      return (
+        <div class:list={['panel', `panel--${col.aud}`]}>
+          <p class="panel__baj">{col.bajada}</p>
+          <div class="news">
+            {top && (
+              <a class="feat reveal" href={`/recursos/${top.id}`} data-cta={`recurso-${top.id}`}>
+                <Media slot="recurso-destacado" ratio="16 / 10" class="feat__media" />
+                <span class="feat__meta">{metaDe(top.data)}</span>
+                <strong>{top.data.titulo}</strong>
+                <span class="feat__baj">{top.data.bajada}</span>
+                {top.pack && <span class="rel">Relacionado: {top.pack.data.nombre}</span>}
+                {top.data.leadMagnet && <span class="rel">Acceso con registro</span>}
+              </a>
+            )}
+            <ul class="items">
+              {rest.map(({ id, data, pack }, i) => (
+                <li class="reveal" style={`--d:${i * 80}ms`}>
+                  <a class="item" href={`/recursos/${id}`} data-cta={`recurso-${id}`}>
+                    <span class="item__meta">{metaDe(data)}</span>
+                    <strong>{data.titulo}</strong>
+                    <span class="item__baj">{data.bajada}</span>
+                    {pack && <span class="rel">Relacionado: {pack.data.nombre}</span>}
+                    {data.leadMagnet && <span class="rel">Acceso con registro</span>}
+                    <span class="item__go" aria-hidden="true"><Icon name="arrow-up-right" size={18} /></span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      );
+    })}
+
+    <div class="social reveal">
+      <p>Contenido corto para cuidarte, sin tabúes.</p>
+      <ul>
+        {site.redes.map((r) => (
+          <li><a href={r.url} target="_blank" rel="noopener" data-cta={`social-${r.nombre.toLowerCase()}`}>{r.nombre}<Icon name="arrow-up-right" size={14} /></a></li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</Section>
+
+<style>
+  .tabs { display: inline-flex; padding: 4px; border-radius: var(--r-pill); background: var(--surface); border: 1px solid var(--line); margin-bottom: 20px; }
+  .tabs input { position: absolute; opacity: 0; pointer-events: none; }
+  .tabs label { padding: 10px 20px; border-radius: var(--r-pill); font-weight: 700; cursor: pointer; color: var(--text-2); transition: background-color 0.3s, color 0.3s; }
+  .tabs input:checked + label { background: var(--text); color: var(--bg); }
+  .tabs input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .panel--empresas { display: none; }
+  :global(.res:has(#tab-empresas:checked)) .panel--empresas { display: block; }
+  :global(.res:has(#tab-empresas:checked)) .panel--pacientes { display: none; }
+  .panel__baj { color: var(--text-2); margin-bottom: 28px; }
+
+  .news { display: grid; gap: 14px; }
+  @media (min-width: 1000px) { .news { grid-template-columns: 1.1fr 1fr; gap: 40px; } }
+  .feat { display: grid; gap: 12px; align-content: start; text-decoration: none; }
+  .feat :global(.feat__media) { margin-bottom: 8px; transition: transform 0.8s var(--ease); }
+  .feat:hover :global(.feat__media) { transform: scale(0.985); }
+  .feat strong { font-family: var(--f-display); font-weight: 500; font-size: clamp(1.5rem, 2.4vw, 2rem); line-height: 1.12; letter-spacing: -0.035em; }
+  .feat__meta, .item__meta { font-size: 0.82rem; font-weight: 700; color: var(--accent-ink); }
+  .feat__baj, .item__baj { color: var(--text-2); }
+  .rel { font-size: 0.86rem; font-weight: 700; color: var(--text); }
+
+  .items { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-2); }
+  .item { position: relative; display: grid; gap: 6px; padding: 24px 56px 24px 0; border-bottom: 1px solid var(--line-2); text-decoration: none; }
+  .item strong { font-family: var(--f-display); font-weight: 500; font-size: 1.2rem; line-height: 1.2; letter-spacing: -0.025em; }
+  .item__go { position: absolute; right: 0; top: 24px; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-2); transition: background-color 0.3s, color 0.3s, transform 0.5s var(--ease); }
+  .item:hover .item__go { background: var(--accent); border-color: var(--accent); color: var(--on-accent); transform: rotate(45deg); }
+
+  .social { margin-top: 56px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px 32px; padding-top: 28px; border-top: 1px solid var(--line); }
+  .social p { font-family: var(--f-display); font-weight: 500; font-size: 1.1rem; letter-spacing: -0.02em; }
+  .social ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .social a { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--r-pill); border: 1px solid var(--line-2); text-decoration: none; font-weight: 700; font-size: 0.9rem; transition: border-color 0.2s, background-color 0.2s; }
+  .social a:hover { border-color: var(--text); background: var(--surface); }
+</style>

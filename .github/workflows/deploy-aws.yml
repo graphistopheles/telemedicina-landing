@@ -1,0 +1,57 @@
+# Despliegue a Amazon S3 + CloudFront (arquitectura de la propuesta ejecutiva).
+# Se ejecuta SOLO a mano (pestaña Actions > "Deploy AWS" > Run workflow) hasta que
+# la infraestructura esté lista. Para activarlo en cada push a main, descomenta `push`.
+#
+# Configuración requerida en GitHub (Settings > Secrets and variables > Actions):
+#   Secrets:
+#     AWS_ROLE_ARN                 Rol IAM con acceso OIDC para GitHub Actions
+#   Variables:
+#     AWS_REGION                   ej. us-east-1
+#     S3_BUCKET                    nombre del bucket privado del sitio
+#     CLOUDFRONT_DISTRIBUTION_ID   ID de la distribución de CloudFront
+name: Deploy AWS
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+
+permissions:
+  id-token: write   # necesario para autenticar con AWS vía OIDC (sin claves guardadas)
+  contents: read
+
+concurrency:
+  group: deploy-aws
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # Caché por tipo de archivo:
+      #   _astro/*  (CSS/JS con hash en el nombre) → 1 año, inmutable
+      #   *.html                                   → sin caché (cambios visibles al instante)
+      #   resto (imágenes, favicon, logo)          → 1 día (se pueden reemplazar con el mismo nombre)
+      - name: Subir a S3
+        run: |
+          B="s3://${{ vars.S3_BUCKET }}"
+          aws s3 sync dist/_astro "$B/_astro" --delete --cache-control "public,max-age=31536000,immutable"
+          aws s3 sync dist/ "$B" --delete --exclude "_astro/*" --exclude "*" --include "*.html" --cache-control "public,max-age=0,must-revalidate"
+          aws s3 sync dist/ "$B" --delete --exclude "_astro/*" --exclude "*.html" --cache-control "public,max-age=86400"
+
+      - name: Invalidar caché de CloudFront
+        run: aws cloudfront create-invalidation --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" --paths "/*"

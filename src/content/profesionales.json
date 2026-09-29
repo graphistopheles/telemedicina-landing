@@ -1,0 +1,5 @@
+[
+  { "id": "p1", "nombre": "Dra. Fernanda Soto", "especialidad": "Medicina familiar", "anios": 12, "iniciales": "FS" },
+  { "id": "p2", "nombre": "Ps. Tomás Rivera", "especialidad": "Psicología clínica", "anios": 9, "iniciales": "TR" },
+  { "id": "p3", "nombre": "Dra. Isidora Muñoz", "especialidad": "Pediatría", "anios": 15, "iniciales": "IM" }
+]

@@ -1,0 +1,55 @@
+---
+/**
+ * Íconos: Phosphor Icons (peso "regular"), paquete @phosphor-icons/core.
+ * Uso: <Icon name="arrow" size={18} />
+ * Para agregar uno: importa el SVG desde @phosphor-icons/core/assets/regular/
+ * y súmalo al mapa `iconos` con un nombre corto. Catálogo: https://phosphoricons.com
+ */
+import arrowRight from '@phosphor-icons/core/assets/regular/arrow-right.svg?raw';
+import arrowUpRight from '@phosphor-icons/core/assets/regular/arrow-up-right.svg?raw';
+import check from '@phosphor-icons/core/assets/regular/check.svg?raw';
+import star from '@phosphor-icons/core/assets/fill/star-fill.svg?raw';
+import shield from '@phosphor-icons/core/assets/regular/shield-check.svg?raw';
+import lock from '@phosphor-icons/core/assets/regular/lock-simple.svg?raw';
+import stethoscope from '@phosphor-icons/core/assets/regular/stethoscope.svg?raw';
+import brain from '@phosphor-icons/core/assets/regular/brain.svg?raw';
+import baby from '@phosphor-icons/core/assets/regular/baby.svg?raw';
+import female from '@phosphor-icons/core/assets/regular/gender-female.svg?raw';
+import leaf from '@phosphor-icons/core/assets/regular/leaf.svg?raw';
+import testTube from '@phosphor-icons/core/assets/regular/test-tube.svg?raw';
+import video from '@phosphor-icons/core/assets/regular/video-camera.svg?raw';
+import fileText from '@phosphor-icons/core/assets/regular/file-text.svg?raw';
+import chat from '@phosphor-icons/core/assets/regular/chat-circle-dots.svg?raw';
+import gift from '@phosphor-icons/core/assets/regular/gift.svg?raw';
+import copy from '@phosphor-icons/core/assets/regular/copy.svg?raw';
+import plugs from '@phosphor-icons/core/assets/regular/plugs-connected.svg?raw';
+import chart from '@phosphor-icons/core/assets/regular/chart-line-up.svg?raw';
+import users from '@phosphor-icons/core/assets/regular/users-three.svg?raw';
+import calendar from '@phosphor-icons/core/assets/regular/calendar-blank.svg?raw';
+import play from '@phosphor-icons/core/assets/fill/play-fill.svg?raw';
+import download from '@phosphor-icons/core/assets/regular/download-simple.svg?raw';
+import plus from '@phosphor-icons/core/assets/regular/plus.svg?raw';
+import heartbeat from '@phosphor-icons/core/assets/regular/heartbeat.svg?raw';
+import pill from '@phosphor-icons/core/assets/regular/pill.svg?raw';
+import books from '@phosphor-icons/core/assets/regular/books.svg?raw';
+import sparkle from '@phosphor-icons/core/assets/regular/sparkle.svg?raw';
+import quotes from '@phosphor-icons/core/assets/fill/quotes-fill.svg?raw';
+import whatsapp from '@phosphor-icons/core/assets/regular/whatsapp-logo.svg?raw';
+import sealCheck from '@phosphor-icons/core/assets/regular/seal-check.svg?raw';
+
+// Los nombres cortos (izquierda) son los que usan el contenido y los componentes.
+const iconos: Record<string, string> = {
+  arrow: arrowRight, 'arrow-up-right': arrowUpRight, check, star, shield, lock,
+  stethoscope, mind: brain, child: baby, venus: female, leaf, vial: testTube,
+  video, doc: fileText, chat, gift, copy, plug: plugs, chart, users, calendar,
+  play, download, plus, pulse: heartbeat, pill, books, sparkle, quotes, whatsapp,
+  seal: sealCheck,
+};
+
+interface Props { name: string; size?: number; class?: string }
+const { name, size = 22, class: className } = Astro.props;
+const svg = (iconos[name] ?? iconos.sparkle)
+  .replace('<svg ', `<svg width="${size}" height="${size}" aria-hidden="true" focusable="false" ${className ? `class="${className}" ` : ''}`);
+---
+
+<Fragment set:html={svg} />

@@ -1,0 +1,128 @@
+---
+/**
+ * PACKS · Pack destacado grande + lista compacta del resto.
+ * Datos → src/content/packs.json. El pack con `destacado: true` ocupa la
+ * tarjeta grande (con foto "pack-destacado" de src/data/imagenes.ts).
+ * Los demás muestran precio y un desplegable "Qué incluye".
+ */
+import { getCollection, getEntries } from 'astro:content';
+import type { SeccionMeta, HomeCopy } from '../../data/home';
+import Section from '../ui/Section.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
+import Icon from '../ui/Icon.astro';
+import Media from '../ui/Media.astro';
+import { clp } from '../../scripts/format';
+
+interface Props { meta: SeccionMeta; copy: HomeCopy['packs'] }
+const { meta, copy } = Astro.props;
+
+const packs = await Promise.all(
+  (await getCollection('packs'))
+    .sort((a, b) => a.data.orden - b.data.orden)
+    .map(async (p) => ({ ...p, servicios: await getEntries(p.data.servicios) }))
+);
+const destacado = packs.find((p) => p.data.destacado) ?? packs[0];
+const resto = packs.filter((p) => p !== destacado);
+---
+
+<Section meta={meta} tono="bg-2">
+  <div class="wrap">
+    <SectionHeader id={meta.id} titulo={copy.titulo} bajada={copy.bajada} />
+
+    <div class="packs">
+      <!-- Pack destacado -->
+      <article class="hot reveal" aria-labelledby={`pack-${destacado.id}`}>
+        <Media slot="pack-destacado" class="hot__media" />
+        <div class="hot__body">
+          {destacado.data.etiqueta && <span class="hot__tag">{destacado.data.etiqueta}</span>}
+          <h3 id={`pack-${destacado.id}`}>{destacado.data.nombre}</h3>
+          <p class="hot__promesa">{destacado.data.promesa}</p>
+          <ul class="inc">
+            {destacado.data.incluye.map((it) => <li><Icon name="check" size={16} />{it}</li>)}
+          </ul>
+          <p class="ideal"><strong>Ideal para</strong> {destacado.data.idealPara}</p>
+          <div class="hot__buy">
+            <div class="price">
+              <strong>{clp(destacado.data.precio)}</strong>
+              <span><s>{clp(destacado.data.precioSeparado)}</s> por separado. Ahorras {clp(destacado.data.precioSeparado - destacado.data.precio)}</span>
+            </div>
+            <a class="btn btn--primary" href="#agendar" data-cta={`pack-${destacado.id}`}>Quiero este pack<span class="btn__ic"><Icon name="arrow" /></span></a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Resto de packs -->
+      <ul class="list">
+        {resto.map(({ id, data, servicios }, i) => (
+          <li class="reveal" style={`--d:${(i + 1) * 80}ms`}>
+            <article class="row" aria-labelledby={`pack-${id}`}>
+              <div class="row__top">
+                <div>
+                  <h3 id={`pack-${id}`}>{data.nombre}</h3>
+                  <p>{data.promesa}</p>
+                </div>
+                <div class="row__price">
+                  <strong>{clp(data.precio)}</strong>
+                  <s>{clp(data.precioSeparado)}</s>
+                </div>
+              </div>
+              <details>
+                <summary>Qué incluye<Icon name="plus" size={16} /></summary>
+                <ul class="inc">{data.incluye.map((it) => <li><Icon name="check" size={16} />{it}</li>)}</ul>
+                <p class="ideal"><strong>Ideal para</strong> {data.idealPara}</p>
+                <p class="svc">{servicios.map((s) => s.data.nombre).join(' + ')}</p>
+              </details>
+              <a class="btn btn--ghost btn--sm" href="#agendar" data-cta={`pack-${id}`}>Quiero este pack<span class="btn__ic"><Icon name="arrow" /></span></a>
+            </article>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <p class="foot">¿Ningún pack calza contigo? <a class="link" href="#agendar" data-cta="packs-orientacion">Agenda medicina general<Icon name="arrow-up-right" /></a> y arma tu chequeo junto al médico.</p>
+  </div>
+</Section>
+
+<style>
+  .packs { display: grid; gap: 14px; }
+  @media (min-width: 1040px) { .packs { grid-template-columns: 1.15fr 1fr; align-items: stretch; } }
+
+  .hot { display: flex; flex-direction: column; border-radius: var(--r-card); overflow: hidden; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .hot :global(.hot__media) { border-radius: 0; aspect-ratio: 16 / 8; }
+  .hot__body { display: grid; gap: 18px; padding: clamp(24px, 3vw, 36px); }
+  .hot__tag { justify-self: start; padding: 5px 12px; border-radius: var(--r-pill); background: var(--accent); color: var(--on-accent); font-size: 0.78rem; font-weight: 700; }
+  .hot h3 { font-size: clamp(2rem, 3.2vw, 2.8rem); line-height: 1; }
+  .hot__promesa { font-size: 1.1rem; color: var(--text-2); }
+  .hot__buy { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; padding-top: 20px; border-top: 1px solid var(--line); }
+  .price { display: grid; gap: 4px; }
+  .price strong { font-family: var(--f-display); font-weight: 500; font-size: 2.4rem; line-height: 1; letter-spacing: -0.04em; }
+  .price span { font-size: 0.84rem; color: var(--ok); font-weight: 700; }
+  .price s { color: var(--text-2); font-weight: 400; }
+
+  .inc { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .inc li { display: flex; gap: 10px; align-items: flex-start; }
+  .inc :global(svg) { flex: none; margin-top: 4px; color: var(--accent-ink); }
+  .ideal { font-size: 0.92rem; color: var(--text-2); }
+  .ideal strong { color: var(--text); }
+
+  .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .row { height: 100%; display: grid; gap: 14px; align-content: start; padding: 24px; border-radius: var(--r-card); background: var(--surface); border: 1px solid var(--line); transition: box-shadow 0.5s var(--ease); }
+  .row:hover { box-shadow: var(--shadow); }
+  .row__top { display: flex; justify-content: space-between; gap: 20px; }
+  .row h3 { font-size: 1.35rem; margin-bottom: 6px; }
+  .row__top p { color: var(--text-2); font-size: 0.95rem; }
+  .row__price { text-align: right; display: grid; align-content: start; }
+  .row__price strong { font-family: var(--f-display); font-weight: 500; font-size: 1.5rem; letter-spacing: -0.03em; white-space: nowrap; }
+  .row__price s { font-size: 0.82rem; color: var(--text-2); }
+  .row details { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 12px; }
+  .row summary { list-style: none; display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; font-size: 0.9rem; color: var(--accent-ink); }
+  .row summary::-webkit-details-marker { display: none; }
+  .row summary :global(svg) { transition: transform 0.35s var(--ease); }
+  .row details[open] summary :global(svg) { transform: rotate(45deg); }
+  .row details[open] summary { margin-bottom: 12px; }
+  .row details .ideal { margin-top: 12px; }
+  .svc { font-size: 0.82rem; color: var(--text-2); margin-top: 4px; }
+  .row .btn { justify-self: start; }
+
+  .foot { margin-top: 40px; color: var(--text-2); }
+</style>

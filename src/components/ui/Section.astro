@@ -1,0 +1,35 @@
+---
+/**
+ * Envoltura semántica de toda sección de la landing.
+ * - Expone la intención estratégica como data-attributes para analítica:
+ *   data-audiencia / data-etapa / data-patron (NO eliminar: los usa GA4).
+ * - `tono` define el fondo: 'bg' (base), 'bg-2' (alterno suave) o 'deep'
+ *   (violeta profundo, reservado a la zona Empresas).
+ */
+import type { SeccionMeta } from '../../data/home';
+
+interface Props {
+  meta: SeccionMeta;
+  tono?: 'bg' | 'bg-2' | 'deep';
+  class?: string;
+}
+const { meta, tono = 'bg', class: className = '' } = Astro.props;
+---
+
+<section
+  id={meta.id}
+  class:list={['section', `section--${tono}`, className]}
+  aria-labelledby={`${meta.id}-titulo`}
+  data-audiencia={meta.audiencia}
+  data-etapa={meta.etapa}
+  data-patron={meta.patron}
+>
+  <slot />
+</section>
+
+<style>
+  .section { position: relative; padding-block: var(--section-y); }
+  .section--bg { background: var(--bg); }
+  .section--bg-2 { background: var(--bg-2); }
+  .section--deep { background: var(--deep); color: var(--on-deep); }
+</style>

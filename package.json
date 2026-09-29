@@ -1,0 +1,20 @@
+{
+  "name": "telemedicina-landing",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@phosphor-icons/core": "^2.1.1",
+    "astro": "^7.3.5"
+  },
+  "description": "Landing B2B2C de telemedicina Medismart (AstroJS, salida estática para S3 + CloudFront).",
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

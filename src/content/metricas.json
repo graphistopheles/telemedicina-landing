@@ -1,0 +1,6 @@
+[
+  { "id": "ausentismo", "valor": "−25%", "etiqueta": "ausentismo laboral", "contexto": "cuando la consulta ocurre en minutos y no exige salir de la oficina.", "fuente": "Benchmark sector HealthTech B2B", "audiencia": "empresas" },
+  { "id": "rotacion", "valor": "−23%", "etiqueta": "rotación de personal", "contexto": "en equipos con acceso a salud mental y reproductiva como beneficio.", "fuente": "Benchmark sector HealthTech B2B", "audiencia": "empresas" },
+  { "id": "productividad", "valor": "+31%", "etiqueta": "productividad", "contexto": "en organizaciones que integran bienestar y salud digital a su cultura.", "fuente": "Dato publicado por Medismart", "audiencia": "empresas" },
+  { "id": "errores", "valor": "−19%", "etiqueta": "errores operativos", "contexto": "cuando los equipos llegan descansados, atendidos y con menos estrés.", "fuente": "Dato publicado por Medismart", "audiencia": "empresas" }
+]

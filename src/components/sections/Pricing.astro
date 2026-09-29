@@ -1,0 +1,198 @@
+---
+/**
+ * PRECIOS · Calculadora de copago (panel dividido) + lista de precios en 2 grupos.
+ * Precios → src/content/servicios.json y packs.json
+ * Reglas de cobertura → src/data/coberturas.ts   ·   Textos → copy.precios (home.ts)
+ * Mensajes de la calculadora → objeto `mensajes` en el <script> de abajo.
+ */
+import { getCollection } from 'astro:content';
+import type { SeccionMeta, HomeCopy } from '../../data/home';
+import { previsiones } from '../../data/coberturas';
+import Section from '../ui/Section.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
+import Icon from '../ui/Icon.astro';
+import { clp } from '../../scripts/format';
+
+interface Props { meta: SeccionMeta; copy: HomeCopy['precios'] }
+const { meta, copy } = Astro.props;
+
+const servicios = (await getCollection('servicios')).sort((a, b) => a.data.orden - b.data.orden);
+const packs = (await getCollection('packs')).sort((a, b) => a.data.orden - b.data.orden);
+const fonasa = previsiones.find((p) => p.id === 'fonasa')!.bonifica;
+
+const datos = {
+  servicios: servicios.map((s) => ({ id: s.id, nombre: s.data.nombre, precio: s.data.precioDesde, fonasa: s.data.bonoFonasa })),
+  previsiones,
+};
+---
+
+<Section meta={meta}>
+  <div class="wrap">
+    <SectionHeader id={meta.id} titulo={copy.titulo} bajada={copy.bajada} />
+
+    <form class="calc reveal" id="copago" data-datos={JSON.stringify(datos)} onsubmit="return false">
+      <div class="calc__in">
+        <fieldset>
+          <legend>Tu previsión</legend>
+          <div class="chips">
+            {previsiones.map((p, i) => (
+              <label class="chip">
+                <input type="radio" name="prevision" value={p.id} checked={i === 0} />
+                <span><strong>{p.label}</strong><small>{p.detalle}</small></span>
+              </label>
+            ))}
+          </div>
+          <div class="isapre" hidden>
+            <label for="pct">Cobertura de tu plan <output id="pctOut">70%</output></label>
+            <input id="pct" type="range" min="30" max="90" step="5" value="70" />
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend><label for="servicio">La atención</label></legend>
+          <select id="servicio" name="servicio">
+            {servicios.map((s) => <option value={s.id}>{s.data.nombre} ({clp(s.data.precioDesde)})</option>)}
+          </select>
+        </fieldset>
+        <p class="calc__nota">{copy.nota}</p>
+      </div>
+
+      <div class="result" aria-live="polite">
+        <p class="result__k">Tú pagas</p>
+        <strong id="copagoOut">{clp(servicios[0].data.precioDesde * (1 - fonasa))}</strong>
+        <dl>
+          <div><dt>Precio publicado</dt><dd id="precioOut">{clp(servicios[0].data.precioDesde)}</dd></div>
+          <div><dt>Cubre tu previsión</dt><dd id="cubreOut">-{clp(servicios[0].data.precioDesde * fonasa)}</dd></div>
+        </dl>
+        <p class="result__msg" id="msgOut">Emitimos tu bono Fonasa al momento de pagar.</p>
+        <a class="btn btn--primary btn--block" href="#agendar" data-cta="calculadora-agendar">Agendar con este valor<span class="btn__ic"><Icon name="arrow" /></span></a>
+      </div>
+    </form>
+
+    <!-- Lista explícita de precios (particular) -->
+    <div class="prices reveal">
+      <div class="group">
+        <h3>Consultas</h3>
+        <table>
+          <caption class="sr-only">Precios particulares de consultas y valor con bono Fonasa</caption>
+          <thead><tr><th scope="col">Atención</th><th scope="col">Particular</th><th scope="col">Con Fonasa</th></tr></thead>
+          <tbody>
+            {servicios.map((s) => (
+              <tr>
+                <th scope="row">{s.data.nombre}</th>
+                <td>{clp(s.data.precioDesde)}</td>
+                <td>{s.data.bonoFonasa ? clp(s.data.precioDesde * (1 - fonasa)) : 'No aplica'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div class="group">
+        <h3>Packs</h3>
+        <table>
+          <caption class="sr-only">Precios de packs</caption>
+          <thead><tr><th scope="col">Pack</th><th scope="col">Precio</th><th scope="col">Por separado</th></tr></thead>
+          <tbody>
+            {packs.map((p) => (
+              <tr>
+                <th scope="row">{p.data.nombre}</th>
+                <td>{clp(p.data.precio)}</td>
+                <td><s>{clp(p.data.precioSeparado)}</s></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p class="free"><Icon name="check" size={16} /> Sin costos de inscripción ni suscripción obligatoria.</p>
+      </div>
+    </div>
+  </div>
+</Section>
+
+<script>
+  import { clp } from '../../scripts/format';
+
+  const form = document.getElementById('copago') as HTMLFormElement | null;
+  if (form) {
+    const { servicios, previsiones } = JSON.parse(form.dataset.datos!);
+    const $ = (id: string) => document.getElementById(id)!;
+    const pct = $('pct') as HTMLInputElement;
+    const isapreBox = form.querySelector<HTMLElement>('.isapre')!;
+
+    // Mensaje bajo el resultado según la previsión elegida (editable).
+    const mensajes: Record<string, string> = {
+      fonasa: 'Emitimos tu bono Fonasa al momento de pagar.',
+      isapre: 'Pagas el copago y te enviamos el documento para reembolso.',
+      empresa: 'Cubierto al 100% por el beneficio de tu empresa.',
+      particular: 'Paga con débito, crédito o transferencia.',
+    };
+
+    const calc = () => {
+      const fd = new FormData(form);
+      const prev = previsiones.find((p: any) => p.id === fd.get('prevision'));
+      const svc = servicios.find((s: any) => s.id === fd.get('servicio'));
+      isapreBox.hidden = !prev.ajustable;
+
+      let bonifica = prev.ajustable ? Number(pct.value) / 100 : prev.bonifica;
+      let msg = mensajes[prev.id];
+      if (prev.id === 'fonasa' && !svc.fonasa) { bonifica = 0; msg = 'Esta atención no tiene bono Fonasa: pagas el precio publicado.'; }
+
+      const cubre = svc.precio * bonifica;
+      $('pctOut').textContent = `${pct.value}%`;
+      $('precioOut').textContent = clp(svc.precio);
+      $('cubreOut').textContent = `-${clp(cubre)}`;
+      $('copagoOut').textContent = clp(svc.precio - cubre);
+      $('msgOut').textContent = msg;
+    };
+    form.addEventListener('input', calc);
+    calc();
+  }
+</script>
+
+<style>
+  .calc { display: grid; border-radius: 28px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-lg); }
+  @media (min-width: 980px) { .calc { grid-template-columns: 1.3fr 1fr; } }
+  .calc__in { padding: clamp(24px, 3.5vw, 44px); display: grid; gap: 30px; align-content: start; }
+  fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 12px; min-width: 0; }
+  legend { padding: 0; margin-bottom: 14px; font-family: var(--f-display); font-weight: 500; font-size: 1.1rem; letter-spacing: -0.02em; }
+
+  .chips { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .chip input { position: absolute; opacity: 0; pointer-events: none; }
+  .chip span { display: grid; gap: 2px; height: 100%; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--line-2); cursor: pointer; transition: border-color 0.2s, background-color 0.2s, color 0.2s; }
+  .chip strong { font-size: 0.98rem; }
+  .chip small { font-size: 0.8rem; color: var(--text-2); line-height: 1.3; }
+  .chip:hover span { border-color: var(--text); }
+  .chip input:checked + span { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+  .chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .isapre[hidden] { display: none; }
+  .isapre { display: grid; gap: 10px; padding: 16px; border-radius: 16px; background: var(--bg-2); }
+  .isapre label { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; }
+  .isapre output { font-family: var(--f-display); color: var(--accent-ink); }
+  input[type='range'] { width: 100%; accent-color: var(--accent); }
+
+  select { width: 100%; min-height: 56px; padding: 0 44px 0 16px; border-radius: var(--r-field); border: 1px solid var(--line-2); background-color: var(--surface); font-size: 1rem; font-weight: 600; cursor: pointer; appearance: none; background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(-45deg, transparent 50%, currentColor 50%); background-position: calc(100% - 22px) 50%, calc(100% - 16px) 50%; background-size: 6px 6px; background-repeat: no-repeat; }
+  select:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .calc__nota { font-size: 0.84rem; color: var(--text-2); }
+
+  .result { display: flex; flex-direction: column; gap: 18px; padding: clamp(24px, 3.5vw, 44px); background: var(--accent-soft); }
+  .result__k { font-weight: 700; color: var(--accent-ink); }
+  .result > strong { font-family: var(--f-display); font-weight: 500; font-size: clamp(3.4rem, 7vw, 5.2rem); line-height: 0.95; letter-spacing: -0.055em; font-variant-numeric: tabular-nums; }
+  .result dl { margin: 0; display: grid; gap: 8px; padding-block: 16px; border-block: 1px solid var(--line-2); }
+  .result dl div { display: flex; justify-content: space-between; gap: 12px; }
+  .result dt { color: var(--text-2); }
+  .result dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .result__msg { color: var(--text-2); }
+  .result .btn { margin-top: auto; }
+
+  .prices { margin-top: 56px; display: grid; gap: 40px; }
+  @media (min-width: 900px) { .prices { grid-template-columns: 1fr 1fr; gap: 64px; } }
+  .group h3 { font-size: 1.3rem; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  thead th { font-size: 0.8rem; font-weight: 700; color: var(--text-2); text-align: right; padding-bottom: 10px; }
+  thead th:first-child { text-align: left; }
+  tbody tr { border-top: 1px solid var(--line); }
+  tbody th { text-align: left; font-weight: 600; padding: 13px 0; }
+  tbody td { text-align: right; padding: 13px 0 13px 16px; font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 700; }
+  tbody td:last-child { color: var(--text-2); font-weight: 500; }
+  .free { display: flex; gap: 8px; align-items: center; margin-top: 18px; font-size: 0.9rem; color: var(--ok); font-weight: 700; }
+</style>
